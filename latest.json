@@ -1,7 +1,7 @@
 {
-  "version": "1.1.2",
-  "notes": "更新のお知らせがすぐ届くようにしました",
-  "zip": "releases/app-1.1.2.zip",
-  "sha256": "e061fbfcf30181537aecc3481c02d93921d5bc5f90dd566ca1bdb7da62a0cae1",
+  "version": "1.2.0",
+  "notes": "9人は上4・下5、10人は5・5で並ぶようにしました",
+  "zip": "releases/app-1.2.0.zip",
+  "sha256": "97a0a26643c148bb9597d8edfe3af2274cc857cc5e6bb02e05644d2254a95860",
   "date": "2026-10-06"
 }

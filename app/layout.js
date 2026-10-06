@@ -7,13 +7,19 @@ var ITALIC_SKEW = 0.2;     // 傾き（約11度）
 
 // n人分の配置を計算。各要素 {x, y} はアイコン左上、size はアイコン一辺
 var MAX_PER_ROW = 4;
+// 人数ごとの例外の並び（上の段から）
+var SPECIAL_ROWS = { 9: [4, 5], 10: [5, 5] };
 function computeLayout(n) {
-  // 1行は最大4人。行数は最小限にし、各行の人数を均等に（余りは上の行へ）例: 5人→3・2、7人→4・3、9人→3・3・3
-  var rows = Math.max(1, Math.ceil(n / MAX_PER_ROW));
-  var base = Math.floor(n / rows), extra = n % rows;
-  var counts = [];
-  for (var k = 0; k < rows; k++) counts.push(base + (k < extra ? 1 : 0));
-  var perRow = counts[0];
+  // 1行は最大4人。行数は最小限にし、各行の人数を均等に（余りは上の行へ）例: 5人→3・2、7人→4・3
+  var counts = SPECIAL_ROWS[n] ? SPECIAL_ROWS[n].slice() : null;
+  if (!counts) {
+    var rowsN = Math.max(1, Math.ceil(n / MAX_PER_ROW));
+    var base = Math.floor(n / rowsN), extra = n % rowsN;
+    counts = [];
+    for (var k = 0; k < rowsN; k++) counts.push(base + (k < extra ? 1 : 0));
+  }
+  var rows = counts.length;
+  var perRow = Math.max.apply(null, counts); // 一番人数の多い段で大きさを決める
   var marginX = 80, marginY = 60;
   var gapR = 0.4;            // アイコン間の隙間（アイコン幅に対する比率）
   var blockR = 1.2;          // アイコン＋はみ出したラベルの高さ比率
