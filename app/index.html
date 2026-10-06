@@ -1,0 +1,152 @@
+<!doctype html>
+<html lang="ja">
+<head>
+<meta charset="utf-8">
+<title>コラボ紹介</title>
+<style>
+  @font-face {
+    font-family: "LabelFont";
+    src: local("Source Han Sans JP Heavy"), local("SourceHanSansJP-Heavy"),
+         local("Noto Sans JP Black"), local("ZenKakuGothicNew-Black"), local("Yu Gothic Bold");
+  }
+  :root { --bg:#232323; --panel:#2e2e2e; --line:#3d3d3d; --text:#d8d8d8; --dim:#8a8a8a; --accent:#2d8ceb; }
+  * { box-sizing: border-box; }
+  html, body { margin:0; height:100%; background:var(--bg); color:var(--text);
+    font: 12px "Yu Gothic UI", "Meiryo", sans-serif; }
+  body { display:flex; flex-direction:column; padding:10px; gap:8px; }
+  .tabs { display:flex; gap:2px; flex-shrink:0; border-bottom:1px solid var(--line); }
+  .tab { background:none; border:none; border-bottom:2px solid transparent; border-radius:0; padding:6px 12px;
+    color:var(--dim); font-size:12px; }
+  .tab:hover { background:none; color:var(--text); }
+  .tab.on { color:var(--text); border-bottom-color:var(--accent); }
+  .pane { display:none; flex:1; min-height:80px; flex-direction:column; gap:8px; }
+  .pane.on { display:flex; }
+  #drop { border:2px dashed var(--line); border-radius:6px; padding:14px; text-align:center;
+    color:var(--dim); cursor:pointer; flex-shrink:0; }
+  #drop.over { border-color:var(--accent); color:var(--text); background:#2a3440; }
+  #list { flex:1; overflow-y:auto; display:flex; flex-direction:column; gap:6px; min-height:60px; }
+  .row { display:flex; align-items:center; gap:6px; background:var(--panel); border-radius:5px; padding:5px; }
+  .row img { width:44px; height:44px; object-fit:cover; border-radius:3px; flex-shrink:0; }
+  .row .num { width:16px; text-align:center; color:var(--dim); }
+  input[type=text], input[type=search], input[type=number], input:not([type]), select {
+    background:#1b1b1b; border:1px solid var(--line); color:var(--text); padding:6px; border-radius:3px; font-size:12px; }
+  .row input[type=text] { flex:1; min-width:0; font-size:13px; }
+  input[type=color] { width:30px; height:28px; padding:0; border:none; background:none; cursor:pointer; }
+  .btns { display:flex; flex-direction:column; gap:2px; }
+  .sz { display:flex; flex-direction:column; align-items:center; gap:1px; flex-shrink:0; }
+  .sz button { padding:0 4px; font-size:10px; line-height:14px; }
+  .sz .pct { font-size:10px; color:var(--dim); line-height:12px; }
+  button { background:#3a3a3a; color:var(--text); border:1px solid #4a4a4a; border-radius:3px;
+    cursor:pointer; font-size:11px; padding:2px 6px; }
+  button:hover { background:#474747; }
+  button:disabled { opacity:.4; cursor:default; }
+
+  /* ライブラリ */
+  .libbar { display:flex; gap:6px; flex-shrink:0; }
+  .libbar input { flex:1; min-width:0; }
+  #grid { flex:1; overflow-y:auto; display:grid; grid-template-columns:repeat(auto-fill, minmax(72px, 1fr));
+    gap:6px; align-content:start; min-height:60px; }
+  .tile { position:relative; background:var(--panel); border:2px solid transparent; border-radius:5px; padding:4px;
+    cursor:pointer; text-align:center; user-select:none; }
+  .tile:hover { border-color:#555; }
+  .tile.sel { border-color:var(--accent); background:#2a3440; }
+  .tile img { width:100%; aspect-ratio:1; object-fit:cover; border-radius:3px; display:block; }
+  .tile .nm { margin-top:3px; font-size:11px; font-weight:bold; overflow:hidden; text-overflow:ellipsis; white-space:nowrap; }
+  .tile .chk { position:absolute; top:2px; right:2px; background:var(--accent); color:#fff; border-radius:50%;
+    width:18px; height:18px; font-size:11px; line-height:18px; display:none; }
+  .tile.sel .chk { display:block; }
+  .empty { color:var(--dim); text-align:center; padding:20px 0; grid-column:1/-1; }
+  #menu { position:fixed; display:none; background:#2b2b2b; border:1px solid #555; border-radius:4px; padding:4px 0;
+    z-index:10; min-width:170px; box-shadow:0 4px 12px rgba(0,0,0,.5); }
+  #menu .mi { padding:6px 12px; cursor:pointer; }
+  #menu .mi:hover { background:#3a3a3a; }
+  #menu .hist { display:flex; flex-wrap:wrap; gap:4px; padding:4px 10px 6px; max-width:240px; }
+  #menu .hist img { width:44px; height:44px; object-fit:cover; border-radius:3px; border:2px solid transparent; cursor:pointer; }
+  #menu .hist img.cur { border-color:var(--accent); }
+  #menu .cap { padding:4px 12px 0; color:var(--dim); font-size:11px; }
+  #modal { position:fixed; inset:0; background:rgba(0,0,0,.55); display:none; align-items:center; justify-content:center; z-index:20; }
+  #modal .box { background:#2b2b2b; border:1px solid #555; border-radius:6px; padding:14px; width:260px;
+    display:flex; flex-direction:column; gap:10px; }
+  #modal .act { display:flex; justify-content:flex-end; gap:6px; }
+
+  #preview { width:100%; max-width:calc(35vh * 16 / 9); align-self:center; aspect-ratio:16/9; background:#000;
+    border:1px solid var(--line); border-radius:3px; flex-shrink:0; }
+  .foot { display:flex; align-items:center; gap:8px; flex-shrink:0; }
+  .foot input[type=number] { width:56px; }
+  #go { margin-left:auto; background:var(--accent); border-color:var(--accent); color:#fff;
+    font-size:13px; font-weight:bold; padding:7px 18px; }
+  #go:hover { background:#1f7ad6; }
+  #status { min-height:16px; color:var(--dim); flex-shrink:0; white-space:pre-wrap; }
+  #status.err { color:#ff6b6b; } #status.ok { color:#6bd38a; }
+  #file { display:none; }
+  #update { display:none; flex-shrink:0; gap:8px; align-items:center; justify-content:space-between;
+    background:#1f3a5c; border:1px solid #2d6fd6; border-radius:5px; padding:8px 10px; }
+  #update .un { color:#c9d6e8; font-size:11px; white-space:pre-wrap; margin-top:2px; }
+  #update .uw { color:#9fb0c6; font-size:10px; margin-top:2px; }
+  #update .ub { display:flex; gap:4px; flex-shrink:0; }
+  #up-go { background:var(--accent); border-color:var(--accent); color:#fff; font-weight:bold; }
+  #fontpop { position:absolute; left:0; right:0; bottom:100%; margin-bottom:2px; max-height:240px; overflow-y:auto;
+    background:#2b2b2b; border:1px solid #555; border-radius:4px; display:none; z-index:15;
+    box-shadow:0 -4px 12px rgba(0,0,0,.5); }
+  #fontpop .fi { padding:5px 8px; cursor:pointer; white-space:nowrap; overflow:hidden; text-overflow:ellipsis; }
+  #fontpop .fi.hl { background:var(--accent); color:#fff; }
+  #fontpop .fi.def { color:var(--dim); }
+  #fontpop .fh { padding:4px 8px 2px; color:var(--dim); font-size:11px; border-top:1px solid #3a3a3a; }
+  #fontpop .star { display:inline-block; width:18px; color:#777; cursor:pointer; }
+  #fontpop .star:hover { color:#ffd54a; }
+  #fontpop .star.on { color:#ffd54a; }
+</style>
+</head>
+<body>
+  <div id="update"></div>
+  <div class="tabs">
+    <button class="tab on" data-tab="members">今回のメンバー <span id="cnt"></span></button>
+    <button class="tab" data-tab="library">ライブラリ</button>
+    <button id="settings" title="設定" style="margin-left:auto;background:none;border:none;font-size:15px;color:var(--dim)">⚙</button>
+  </div>
+
+  <section class="pane on" id="pane-members">
+    <div id="drop">ここにアイコンをドラッグ＆ドロップ<br><span style="font-size:11px">（クリックで選択 / Ctrl+Vで貼り付けもOK）</span></div>
+    <input type="file" id="file" accept="image/*" multiple>
+    <div id="list"></div>
+  </section>
+
+  <section class="pane" id="pane-library">
+    <div class="libbar">
+      <input type="search" id="q" placeholder="名前で検索">
+      <select id="sort">
+        <option value="recent">最近使った人</option>
+        <option value="freq">よく使う人</option>
+        <option value="kana">五十音順</option>
+      </select>
+    </div>
+    <div id="grid"></div>
+  </section>
+
+  <canvas id="preview" width="640" height="360"></canvas>
+  <div class="foot">
+    <span>フォント</span>
+    <div style="flex:1;position:relative">
+      <input id="font" placeholder="クリックでフォント一覧" autocomplete="off" style="width:100%">
+      <div id="fontpop"></div>
+    </div>
+    <label title="ラベルの文字を斜体にする" style="display:flex;align-items:center;gap:3px;white-space:nowrap;cursor:pointer">
+      <input type="checkbox" id="italic"><i>斜体</i></label>
+  </div>
+  <div class="foot">
+    <label>表示秒数 <input type="number" id="sec" value="5" min="0.5" step="0.5"></label>
+    <button id="clear">全部消す</button>
+    <button id="go">決定</button>
+  </div>
+  <div id="status"></div>
+
+  <div id="menu"></div>
+  <div id="modal"><div class="box"></div></div>
+
+  <script src="layout.js"></script>
+  <script src="fontinfo.js"></script>
+  <script src="main.js"></script>
+  <script src="library.js"></script>
+  <script src="updater.js"></script>
+</body>
+</html>
