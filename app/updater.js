@@ -13,12 +13,13 @@ var Updater = (function () {
   function rawUrl(p) { return 'https://raw.githubusercontent.com/' + local.repo + '/main/' + p; }
 
   // https で取得（リダイレクト対応）。Buffer を返す
-  function get(url, depth) {
+  function get(url, depth, headers) {
     return new Promise(function (resolve, reject) {
       if ((depth || 0) > 5) return reject(new Error('リダイレクトが多すぎます'));
-      nodeReq('https').get(url, { headers: { 'User-Agent': 'collab-layout-panel' } }, function (res) {
+      var h = Object.assign({ 'User-Agent': 'collab-layout-panel' }, headers || {});
+      nodeReq('https').get(url, { headers: h }, function (res) {
         if (res.statusCode >= 300 && res.statusCode < 400 && res.headers.location) {
-          res.resume(); return resolve(get(res.headers.location, (depth || 0) + 1));
+          res.resume(); return resolve(get(res.headers.location, (depth || 0) + 1, headers));
         }
         if (res.statusCode !== 200) { res.resume(); return reject(new Error('HTTP ' + res.statusCode)); }
         var chunks = [];
@@ -32,7 +33,11 @@ var Updater = (function () {
     if (!nodeReq || !local.repo) { if (manual) status('更新の確認先が設定されていません', 'err'); return Promise.resolve(null); }
     if (C.dev) { if (manual) status('開発モードのため自動更新はオフです', 'ok'); return Promise.resolve(null); }
     if (manual) status('更新を確認中…');
-    return get(rawUrl('latest.json') + '?t=' + Date.now()).then(function (buf) {
+    // 最新情報は GitHub API から取る（raw は数分キャッシュされるため）。だめなら raw に切り替え
+    var api = 'https://api.github.com/repos/' + local.repo + '/contents/latest.json?ref=main';
+    return get(api, 0, { Accept: 'application/vnd.github.raw' }).catch(function () {
+      return get(rawUrl('latest.json') + '?t=' + Date.now());
+    }).then(function (buf) {
       var info = JSON.parse(buf.toString('utf8'));
       if (newer(info.version, local.version)) { showBanner(info); return info; }
       if (manual) status('最新版です（v' + local.version + '）', 'ok');

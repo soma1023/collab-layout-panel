@@ -1,7 +1,7 @@
 {
-  "version": "1.1.1",
-  "notes": "自動更新のテストです",
-  "zip": "releases/app-1.1.1.zip",
-  "sha256": "9fb380ed9d267bc33c8e1f2b49bc9772fb9ae4175955b280f9669cdbeddd530b",
+  "version": "1.1.2",
+  "notes": "更新のお知らせがすぐ届くようにしました",
+  "zip": "releases/app-1.1.2.zip",
+  "sha256": "e061fbfcf30181537aecc3481c02d93921d5bc5f90dd566ca1bdb7da62a0cae1",
   "date": "2026-10-06"
 }
